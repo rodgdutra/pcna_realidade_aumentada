@@ -8,23 +8,12 @@ using UnityEngine;
 
 public class Graph : MonoBehaviour {
 
-    public bool centre;
-    public bool useControls;
-    public string freqAxis;
-    public string heightAixs;
-
-    public float frequency;
-    public float height;
-    public float slant;
-
-    public float dampenChange = 10;
-    public int heightMax = 10;
-    public int heightMin = -10;
-    public float freqMax = 20;
-    public float freqMin = 2;
-
-    public int length = 1;
-    
+    public float min_x = (float)-0.5;
+    public float max_x = (float)0.5;
+    public int resolution = 100;
+    public float height = 1;
+    public float phase = 0;
+    public float frequency = 2;
 
     LineRenderer lr;
     Vector3[] positions;
@@ -32,74 +21,39 @@ public class Graph : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         lr = GetComponent<LineRenderer>();
-
-        
         DrawGraph();
     }
 	
 	// Update is called once per frame
 	void Update () {
-
+        // updates the phase in each update event
+        phase = Time.time;
         DrawGraph();
-
-        if (useControls)
-            Controls();
 	}
 
     //Calculate graph and set points on line renderer
     void DrawGraph()
-    {
-        positions = new Vector3[(2 + (int)frequency * 3) * length];
+    {   
+        float x_increment = ((min_x*-1) + max_x)/(resolution);
+
+        positions = new Vector3[resolution];
         lr.positionCount = positions.Length;
 
+        // Position 0
+        positions[0].x = min_x;
+        positions[0].y = 0;
+        positions[0].z = height * Mathf.Sin(2*3);
 
-        for (int index = 0; index < positions.Length; ++index)
+        for (int index = 1; index < positions.Length; ++index)
         {
-            if (frequency > 0)
-            {
-                if (centre)
-                    positions[index].x = ((index / frequency)  - length)/10 ;
-                else
-                    positions[index].x = (index / frequency)/10 ;
-            }
-            else
-            {
-                positions[index].x = index/10 ;
-            }
-
+            // Update the positions by each index 
+            positions[index].x = positions[index-1].x + x_increment;
             positions[index].y = 0;
+            positions[index].z = height * Mathf.Sin(2*3*index+phase);
 
-            positions[index].z = height * Mathf.Sin(index);
         }
 
         lr.SetPositions(positions);
-    }
-
-    //Use Input Axis to alter FreqAxis and HeightAxis within min/max ranges
-    void Controls()
-    {
-        //Height
-        if(Input.GetAxis(heightAixs) > 0.1 || (Input.GetAxis(heightAixs) < 0.1))
-        {
-           // Debug.Log("Input");
-            if (height <= heightMax && height >= heightMin)
-                height += Input.GetAxis(heightAixs) / dampenChange;
-            else if (height < heightMin)
-                height = heightMin;
-            else if (height > heightMax)
-                height = heightMax;
-        }
-
-        //Frequency
-        if (Input.GetAxis(freqAxis) > 0.1 || Input.GetAxis(freqAxis) < 0.1)
-        {
-            if (frequency <= freqMax && frequency >= freqMin)
-               frequency -= Input.GetAxis(freqAxis) / dampenChange;
-            else if (frequency < freqMin)
-                frequency = freqMin;
-            else if (frequency > freqMax)
-                frequency = freqMax;
-        }
     }
 
     //Returns Y on the graph given X
